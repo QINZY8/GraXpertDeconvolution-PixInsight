@@ -31,8 +31,8 @@
 ## 安装脚本到 PixInsight
 
 1. 打开 PixInsight
-2. 菜单 **RESOURCES > Updates > Manage Repositories**
-3. Add > URL: 
+2. 菜单 **Scripts → Feature Scripts**
+3. 点击 **Add**，选择本文件 `GraXpertDeconvolution.js`
 4. 脚本会出现在 **Scripts** 菜单下，可随时运行
 
 ## 使用步骤
