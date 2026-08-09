@@ -16,9 +16,9 @@
  * 使用：
  *   在 PixInsight 中打开一张线性图像，然后 运行 本脚本。
  *   首次运行时需指定 GraXpert 可执行文件的完整路径（会保存在全局偏好中）。
- *
- * 作者：GitHub Copilot
- * 日期：2026-08-09
+ * 
+ *   作者：QINZY8
+ *   仓库：https://github.com/QINZY8/GraXpertDeconvolution-PixInsight
  */
 
 #feature-id GraXpertDeconvolution
