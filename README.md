@@ -1,4 +1,4 @@
-# GraXpertDeconvolution.js — PixInsight 调用 GraXpert 反卷积
+# GraXpertDeconvolution — PixInsight 调用 GraXpert 反卷积
 
 这是一个 **PixInsight 脚本**（PJSR），用于在 PixInsight 中直接调用 **GraXpert 3.x** 的 AI 反卷积（Deconvolution）功能，无需离开 PixInsight 手动打开 GraXpert。
 ![img.png](2026-08-09.png)
