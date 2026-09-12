@@ -404,14 +404,12 @@ function processActiveImage(graxpertPath, params, targetView) {
         throw Error("找不到 GraXpert 反卷积输出文件。");
 
     // 5. 加载结果到 PixInsight
+    // 使用原图像名 + "_deconv" 作为窗口 ID，避免使用临时文件名
+    var newId = sourceId + "_deconv";
     Console.writeln("正在加载结果: " + resultPath);
-    var resultWindow = ImageWindow.open(resultPath, "", "", true)[0];
+    var resultWindow = ImageWindow.open(resultPath, newId, "", true)[0];
     if (resultWindow == null)
         throw Error("无法打开反卷积结果文件。");
-
-    // 重命名结果窗口：使用原图像名 + "_deconv" 后缀（避免使用临时文件名）
-    var newId = sourceId + "_deconv";
-    resultWindow.mainView.id = newId;
 
     resultWindow.show();
     Console.writeln("<br><b>反卷积完成！</b> 结果窗口: " +
