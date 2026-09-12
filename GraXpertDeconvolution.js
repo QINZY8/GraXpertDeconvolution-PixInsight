@@ -26,7 +26,7 @@
  *   仓库：https://github.com/QINZY8/GraXpertDeconvolution-PixInsight
  */
 
-#feature-id GraXpertDeconvolution
+#feature-id    GraXpertDeconvolution  : GraXpertDeconvolution > GraXpertDeconvolution
 #feature-info 调用 GraXpert AI 反卷积功能
 
 #include <pjsr/DataType.jsh>
