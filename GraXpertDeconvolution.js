@@ -39,12 +39,13 @@
 // 全局设置键，用于记住 GraXpert 可执行文件路径
 #define GRAXPERT_PATH_KEY "GraXpertDeconvolution/GraXpertPath"
 
-// 参数键前缀（用于 Parameters 持久化，支持 process icon）
-#define P_MODE      "GraXpertDeconvolution/mode"
-#define P_STRENGTH  "GraXpertDeconvolution/strength"
-#define P_PSFSIZE   "GraXpertDeconvolution/psfsize"
-#define P_BATCHSIZE "GraXpertDeconvolution/batchsize"
-#define P_GPU       "GraXpertDeconvolution/gpu"
+// 参数键（用于 Parameters 持久化，支持 process icon）
+// 注意：Parameters 键名不能包含 "/" 等特殊字符，只能使用字母、数字、下划线
+#define P_MODE      "gxd_mode"
+#define P_STRENGTH  "gxd_strength"
+#define P_PSFSIZE   "gxd_psfsize"
+#define P_BATCHSIZE "gxd_batchsize"
+#define P_GPU       "gxd_gpu"
 
 /**
  * 从 Parameters 恢复参数（用于 process icon 拖拽执行）。
