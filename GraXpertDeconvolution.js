@@ -66,7 +66,7 @@ function loadParameters() {
     if (Parameters.has(P_PSFSIZE))
         params.psfSize = Parameters.getReal(P_PSFSIZE);
     if (Parameters.has(P_BATCHSIZE))
-        params.batchSize = Parameters.getInt(P_BATCHSIZE);
+        params.batchSize = parseInt(Parameters.get(P_BATCHSIZE));
     if (Parameters.has(P_GPU))
         params.gpu = Parameters.getBoolean(P_GPU);
 
@@ -110,7 +110,7 @@ function getGraXpertPath() {
 
 /**
  * 将指定视图（或当前活动图像）保存为临时 XISF 文件，返回文件路径。
- * 使用 Image.saveAsXISF 避免弹出 XISF 选项对话框。
+ * 使用 ImageWindow.saveAs 保存（与 GraXpert Suite 相同的调用方式，不弹出选项对话框）。
  * @param targetView 可选，指定要保存的视图；为 null 时使用活动窗口。
  */
 function saveActiveImageAsXISF(targetView) {
@@ -127,8 +127,10 @@ function saveActiveImageAsXISF(targetView) {
     var tempDir = File.systemTempDirectory;
     var xisfPath = tempDir + "/graxpert_input_" + String(Date.now()) + ".xisf";
 
-    // 使用底层 Image 方法保存，不弹出选项对话框
-    window.mainView.image.saveAsXISF(xisfPath);
+    // 保存为 XISF（参数顺序参考 GraXpert Suite：path, false, false, true, false）
+    if (!window.saveAs(xisfPath, false, false, true, false)) {
+        throw Error("保存临时 XISF 文件失败。");
+    }
 
     return xisfPath;
 }
@@ -233,18 +235,16 @@ function collectParameters() {
     var applyClicked = false;
 
     // --- New Instance 按钮（左下角，蓝色三角图标）---
+    // 点击后创建处理实例，对话框保持打开，可连续拖动多个实例
     var newInstanceButton = new ToolButton(dialog);
     newInstanceButton.icon = dialog.scaledResource(":/process-interface/new-instance.png");
     newInstanceButton.setScaledFixedSize(24, 24);
-    newInstanceButton.toolTip = "<p>New Instance：保存当前参数并创建处理实例，可拖拽到图像上执行。</p>";
+    newInstanceButton.toolTip = "<p>New Instance：创建处理实例，可拖拽到图像上执行。对话框保持打开，可连续拖动多个实例。</p>";
     newInstanceButton.onMousePress = function() {
         // 保存参数到 Parameters，供 process icon 使用
         saveParameters(currentParams());
-        // 创建脚本实例（process icon）
+        // 创建脚本实例（process icon），对话框不关闭
         dialog.newInstance();
-    };
-    newInstanceButton.onMouseRelease = function() {
-        dialog.ok();
     };
 
     // --- Apply 按钮（右下角，绿色对勾图标）---
