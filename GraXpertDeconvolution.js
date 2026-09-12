@@ -323,6 +323,15 @@ function collectParameters() {
 
 /**
  * 处理图像（单次反卷积流程）。
+ *
+ * 流程：导出临时文件 → 调用 GraXpert 命令行 → 加载结果 → 清理临时文件。
+ *
+ * 为什么需要临时文件？
+ *   GraXpert 是独立的命令行程序（GraXpert.exe），它只能通过文件输入/输出，
+ *   无法直接访问 PixInsight 内存中的图像。因此必须先把图像导出为临时文件，
+ *   交给 GraXpert 处理，再把结果文件加载回 PixInsight。这是跨进程数据交换的
+ *   必要中间步骤。临时文件在处理完成后会自动删除。
+ *
  * @param graxpertPath GraXpert 可执行文件路径
  * @param params 反卷积参数
  * @param targetView 可选，指定要处理的视图；为 null 时使用活动窗口。
@@ -336,10 +345,12 @@ function processActiveImage(graxpertPath, params, targetView) {
         sourceWindow = ImageWindow.activeWindow;
     var sourceId = (sourceWindow != null) ? sourceWindow.mainView.id : "image";
 
-    // 1. 保存图像为临时 XISF
-    Console.writeln("正在保存图像为临时 XISF ...");
+    // 1. 导出图像到临时文件
+    //    说明：GraXpert 是独立的命令行程序，只能通过文件输入/输出，
+    //    无法直接访问 PixInsight 内存中的图像，因此必须先把图像导出为临时文件。
+    Console.writeln("正在导出图像到临时文件（GraXpert 需要文件输入）...");
     var inputPath = saveActiveImageAsXISF(targetView);
-    Console.writeln("输入文件: " + inputPath);
+    Console.writeln("临时输入文件: " + inputPath);
 
     // 2. 构造输出路径（无扩展名）
     var outputBase = inputPath.replace(/\.xisf$/i, "_result");
