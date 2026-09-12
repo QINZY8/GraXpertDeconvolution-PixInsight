@@ -168,10 +168,12 @@ function buildCommand(graxpertPath, inputPath, outputPath, params) {
 }
 
 /**
- * 收集用户输入的反卷积参数。返回 null 表示用户取消。
- * 界面右下角提供 "Apply"（应用）按钮，左下角提供 "New Instance"（新实例）按钮。
+ * 显示参数对话框。
+ * - Apply（右下角）：处理当前活动图像，对话框保持打开，可连续处理多张图像
+ * - New Instance（左下角）：创建处理实例（图标），创建后关闭对话框
+ * - Cancel：关闭对话框
  */
-function collectParameters() {
+function showDialog(graxpertPath) {
     var dialog = new Dialog;
 
     // 从已保存的 Parameters 恢复初始值（首次运行时为默认值）
@@ -185,7 +187,8 @@ function collectParameters() {
 
     dialog.help = "设置 GraXpert 反卷积的参数。\n" +
                   "Object-only: 仅反卷积深空天体；Stars-only: 仅反卷积恒星。\n" +
-                  "点击\"Apply\"处理当前图像；将左下角\"New Instance\"图标拖到图像上可创建处理实例。";
+                  "点击\"Apply\"处理当前图像（对话框保持打开，可切换图像后继续处理）；" +
+                  "点击左下角\"New Instance\"创建处理图标。";
 
     // --- 控件 ---
     var modeLabel = new Label(dialog);
@@ -231,30 +234,47 @@ function collectParameters() {
         };
     }
 
-    // 标志：是否点击了 Apply（执行）
-    var applyClicked = false;
-
-    // --- New Instance 按钮（左下角，蓝色三角图标）---
-    // 点击后创建处理实例，对话框保持打开，可连续拖动多个实例
-    var newInstanceButton = new ToolButton(dialog);
-    newInstanceButton.icon = dialog.scaledResource(":/process-interface/new-instance.png");
-    newInstanceButton.setScaledFixedSize(24, 24);
-    newInstanceButton.toolTip = "<p>New Instance：创建处理实例，可拖拽到图像上执行。对话框保持打开，可连续拖动多个实例。</p>";
-    newInstanceButton.onMousePress = function() {
-        // 保存参数到 Parameters，供 process icon 使用
-        saveParameters(currentParams());
-        // 创建脚本实例（process icon），对话框不关闭
-        dialog.newInstance();
-    };
-
     // --- Apply 按钮（右下角，绿色对勾图标）---
+    // 在对话框内直接处理当前图像，对话框保持打开，可连续处理多张图像
     var applyButton = new PushButton(dialog);
     applyButton.text = "Apply";
     applyButton.icon = dialog.scaledResource(":/icons/ok.png");
-    applyButton.toolTip = "<p>对当前活动图像执行 GraXpert 反卷积。</p>";
+    applyButton.toolTip = "<p>对当前活动图像执行 GraXpert 反卷积。对话框保持打开，可切换到下一张图像后再次点击。</p>";
     applyButton.onClick = function() {
-        applyClicked = true;
-        saveParameters(currentParams());   // 保存参数供下次使用
+        if (ImageWindow.activeWindow == null) {
+            Console.writeln("<red>没有活动图像窗口。</red> 请先打开一张图像。");
+            return;
+        }
+        var params = currentParams();
+        saveParameters(params);   // 保存参数供下次使用
+
+        Console.writeln("<br>----- 处理图像: " + ImageWindow.activeWindow.mainView.id + " -----");
+        try {
+            processActiveImage(graxpertPath, params, null);
+        }
+        catch (e) {
+            Console.writeln("<red>错误:</red> " + e.message);
+            Console.writeln("反卷积失败。请检查 GraXpert 路径和参数。");
+        }
+        Console.writeln("<br>可切换到下一张图像后再次点击\"Apply\"，或点击\"Cancel\"关闭对话框。<br>");
+    };
+
+    // --- New Instance 按钮（左下角，蓝色三角图标）---
+    // 创建处理实例（process icon）。注意：PixInsight 脚本实例不能在脚本运行时
+    // 递归执行，因此创建实例后需要关闭对话框，再将图标拖到图像上执行。
+    var newInstanceButton = new ToolButton(dialog);
+    newInstanceButton.icon = dialog.scaledResource(":/process-interface/new-instance.png");
+    newInstanceButton.setScaledFixedSize(24, 24);
+    newInstanceButton.toolTip = "<p>New Instance：创建处理实例（图标）。创建后对话框会关闭，可将图标拖到图像上执行。</p>";
+    newInstanceButton.onMousePress = function() {
+        // 保存参数到 Parameters，供 process icon 使用
+        saveParameters(currentParams());
+        // 创建脚本实例（process icon）
+        dialog.newInstance();
+    };
+    newInstanceButton.onMouseRelease = function() {
+        // 必须关闭对话框，否则脚本实例无法在图像上执行
+        // （PixInsight 不支持脚本实例递归执行）
         dialog.ok();
     };
 
@@ -299,11 +319,6 @@ function collectParameters() {
     dialog.sizer = sizer;
     dialog.buttons = Dialog.None;
     dialog.execute();
-
-    if (!applyClicked)
-        return null;
-
-    return currentParams();
 }
 
 /**
@@ -443,31 +458,8 @@ function main() {
     }
     else {
         // === 模式 2：正常打开脚本，显示对话框 ===
-        if (ImageWindow.activeWindow == null) {
-            Console.writeln("<red>没有活动图像窗口。</red> 请先打开一张图像。");
-            return;
-        }
-
-        var params = collectParameters();
-        if (params == null) {
-            Console.writeln("用户取消。");
-            return;
-        }
-
-        Console.writeln("<br>----- 处理图像: " + ImageWindow.activeWindow.mainView.id + " -----");
-        Console.writeln("模式: " + params.mode);
-        Console.writeln("强度: " + params.strength);
-        Console.writeln("PSF 尺寸: " + params.psfSize);
-        Console.writeln("并行块数: " + params.batchSize);
-        Console.writeln("GPU 加速: " + params.gpu);
-
-        try {
-            processActiveImage(graxpertPath, params, null);
-        }
-        catch (e) {
-            Console.writeln("<red>错误:</red> " + e.message);
-            Console.writeln("反卷积失败。请检查 GraXpert 路径和参数。");
-        }
+        // Apply 按钮在对话框内处理图像，对话框保持打开，可连续处理多张图像
+        showDialog(graxpertPath);
     }
 }
 
