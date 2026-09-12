@@ -328,6 +328,14 @@ function collectParameters() {
  * @param targetView 可选，指定要处理的视图；为 null 时使用活动窗口。
  */
 function processActiveImage(graxpertPath, params, targetView) {
+    // 0. 记录原始视图名称（用于结果窗口命名）
+    var sourceWindow = null;
+    if (targetView != null && targetView.window != null)
+        sourceWindow = targetView.window;
+    else
+        sourceWindow = ImageWindow.activeWindow;
+    var sourceId = (sourceWindow != null) ? sourceWindow.mainView.id : "image";
+
     // 1. 保存图像为临时 XISF
     Console.writeln("正在保存图像为临时 XISF ...");
     var inputPath = saveActiveImageAsXISF(targetView);
@@ -400,6 +408,10 @@ function processActiveImage(graxpertPath, params, targetView) {
     var resultWindow = ImageWindow.open(resultPath, "", "", true)[0];
     if (resultWindow == null)
         throw Error("无法打开反卷积结果文件。");
+
+    // 重命名结果窗口：使用原图像名 + "_deconv" 后缀（避免使用临时文件名）
+    var newId = sourceId + "_deconv";
+    resultWindow.mainView.id = newId;
 
     resultWindow.show();
     Console.writeln("<br><b>反卷积完成！</b> 结果窗口: " +
